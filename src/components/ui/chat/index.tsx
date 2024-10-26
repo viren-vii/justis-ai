@@ -262,7 +262,7 @@ export default function Chat() {
         onKeyDown={onKeyDown}
         onChange={handleInputChange}
         placeholder="Type your message here..."
-        className="bg-[#F6F6F6] min-h-12 resize-none rounded-lg border-0 p-3 shadow-none w-full"
+        className="bg-[#F6F6F6] min-h-12 resize-none rounded-lg border-0 p-3 shadow-none w-full hover:drop-shadow-lg"
       />
 
       {/* Send Button inline with ChatInput */}

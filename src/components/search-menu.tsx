@@ -150,7 +150,7 @@ const SearchMenu = () => {
               )
               .map((chat) => (
                 <Link to={chat.url} key={chat.url}>
-                  <p className="p-2 hover:bg-muted ">
+                  <p className="p-2 hover: ">
                     {chat.emoji} {chat.name}
                   </p>
                 </Link>

@@ -1,5 +1,5 @@
 import { LoginForm } from "@/components/login-form";
-import HeroSection from "@/components/HeroSection";
+import HeroSection from "@/components/heroSection";
 
 export default function LoginPage() {
   return (

@@ -22,6 +22,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { LOCAL_STORAGE_ACTIVE_THREAD_IDS } from "@/lib/chat.utils";
+import {
+  getLocalStorageValue,
+  storeLocalStorageValue,
+} from "@/lib/localstorage.utils";
 
 export function NavInbox({
   inbox,
@@ -29,10 +34,18 @@ export function NavInbox({
   inbox: {
     name: string;
     url: string;
-    emoji: string;
   }[];
 }) {
   const { isMobile } = useSidebar();
+
+  const deleteThread = (thread_id: string) => {
+    const thread_ids = getLocalStorageValue(LOCAL_STORAGE_ACTIVE_THREAD_IDS);
+
+    storeLocalStorageValue(
+      LOCAL_STORAGE_ACTIVE_THREAD_IDS,
+      thread_ids.filter((id: string) => id !== thread_id)
+    );
+  };
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -42,7 +55,6 @@ export function NavInbox({
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <a href={item.url} title={item.name}>
-                <span>{item.emoji}</span>
                 <span>{item.name}</span>
               </a>
             </SidebarMenuButton>
@@ -57,21 +69,17 @@ export function NavInbox({
                 className="w-56 rounded-lg"
                 side={isMobile ? "bottom" : "right"}
                 align={isMobile ? "end" : "start"}>
-                <DropdownMenuItem>
-                  <StarOff className="text-muted-foreground" />
-                  <span>Remove from Favorites</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `${location.href}chat?thread_id=${item.name}`
+                    );
+                  }}>
                   <Link className="text-muted-foreground" />
                   <span>Copy Link</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <ArrowUpRight className="text-muted-foreground" />
-                  <span>Open in New Tab</span>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => deleteThread(item.name)}>
                   <Trash2 className="text-muted-foreground" />
                   <span>Delete</span>
                 </DropdownMenuItem>
@@ -83,4 +91,3 @@ export function NavInbox({
     </SidebarGroup>
   );
 }
-

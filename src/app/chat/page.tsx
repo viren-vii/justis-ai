@@ -4,34 +4,36 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import ChatRightPanel from "@/components/ui/chat-right-panel";
-
-import { Client } from "@langchain/langgraph-sdk";
-
-const DEPLOYMENT_URL = import.meta.env.VITE_SERVER_URL;
+import { ChatInstance } from "@/lib/chat.utils";
+import { useEffect, useState } from "react";
+import { DefaultValues, Thread } from "@langchain/langgraph-sdk";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function ChatPage() {
-  const client = new Client({ apiUrl: DEPLOYMENT_URL });
-  // Using the graph deployed with the name "agent"
-  const assistantID = "agent";
-  // create thread
+  const chat = new ChatInstance();
 
-  const createThread = async () => {
-    const thread = await client.threads.create();
-    console.log(thread);
-  };
+  const [thread, setThread] = useState<Thread<DefaultValues>>();
 
-  createThread();
+  const location = useLocation();
+  const threadId = new URLSearchParams(location.search).get("thread_id");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    chat.createThread(threadId).then((thread) => {
+      setThread(thread);
+      navigate(`/chat?thread_id=${thread.thread_id}`);
+    });
+  }, []);
 
   return (
     <ResizablePanelGroup direction="horizontal" className="gap-6">
       <ResizablePanel minSize={50}>
-        <Chat />
+        {thread && <Chat chat={chat} thread={thread} />}
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel minSize={20}>
+      {/* <ResizablePanel minSize={20}>
         <ChatRightPanel />
-      </ResizablePanel>
+      </ResizablePanel> */}
     </ResizablePanelGroup>
   );
 }

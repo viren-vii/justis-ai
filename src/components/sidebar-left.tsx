@@ -11,7 +11,6 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { NavFavorites } from "@/components/nav-favorites";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 import { AccountHandler } from "@/components/account-handler";
@@ -22,6 +21,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavInbox } from "./nav-inbox";
+import { getLocalStorageValue } from "@/lib/localstorage.utils";
+import { LOCAL_STORAGE_ACTIVE_THREAD_IDS } from "@/lib/chat.utils";
 
 // This is sample data.
 const data = {
@@ -64,65 +65,20 @@ const data = {
       icon: MessageCircleQuestion,
     },
   ],
-  favorites: [
-    {
-      name: "Project Management & Task Tracking",
-      url: "#",
-      emoji: "📊",
-    },
-    {
-      name: "Family Recipe Collection & Meal Planning",
-      url: "#",
-      emoji: "🍳",
-    },
-    {
-      name: "Fitness Tracker & Workout Routines",
-      url: "#",
-      emoji: "💪",
-    },
-    {
-      name: "Book Notes & Reading List",
-      url: "#",
-      emoji: "📚",
-    },
-    {
-      name: "Sustainable Gardening Tips & Plant Care",
-      url: "#",
-      emoji: "🌱",
-    },
-  ],
-  inbox: [
-    {
-      name: "Project Management & Task Tracking",
-      url: "#",
-      emoji: "📊",
-    },
-    {
-      name: "Family Recipe Collection & Meal Planning",
-      url: "#",
-      emoji: "🍳",
-    },
-    {
-      name: "Fitness Tracker & Workout Routines",
-      url: "#",
-      emoji: "💪",
-    },
-    {
-      name: "Book Notes & Reading List",
-      url: "#",
-      emoji: "📚",
-    },
-    {
-      name: "Sustainable Gardening Tips & Plant Care",
-      url: "#",
-      emoji: "🌱",
-    },
-  ],
 };
 
 export function SidebarLeft({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
+  const inbox = React.useMemo(() => {
+    const thread_ids =
+      getLocalStorageValue(LOCAL_STORAGE_ACTIVE_THREAD_IDS) || [];
+    return thread_ids.map((thread_id: string) => ({
+      url: `/chat?thread_id=${thread_id}`,
+      name: thread_id,
+    }));
+  }, [localStorage]);
+
   return (
     <Sidebar className="border-r-0" {...props}>
       <SidebarHeader>
@@ -130,12 +86,10 @@ export function SidebarLeft({
         <NavMain items={data.navMain} />
       </SidebarHeader>
       <SidebarContent>
-        <NavFavorites favorites={data.favorites} />
-        <NavInbox inbox={data.inbox} />
+        <NavInbox inbox={inbox} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>
   );
 }
-

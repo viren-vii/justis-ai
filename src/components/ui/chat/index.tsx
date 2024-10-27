@@ -1,237 +1,134 @@
-"use client";
-
-import {
-  ChatBubble,
-  ChatBubbleAction,
-  ChatBubbleAvatar,
-  ChatBubbleMessage,
-} from "@/components/ui/chat/chat-bubble";
-import { ChatInput } from "@/components/ui/chat/chat-input";
-import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
-import { Button } from "@/components/ui/button";
-import {
-  CopyIcon,
-  CornerDownLeft,
-  Mic,
-  Paperclip,
-  RefreshCcw,
-  Volume2,
-} from "lucide-react";
-import { useChat } from "ai/react";
+import { ChatInstance, TMessage } from "@/lib/chat.utils";
+import { DefaultValues, Thread } from "@langchain/langgraph-sdk";
 import { useEffect, useRef, useState } from "react";
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Message } from "ai/react";
+import { Button } from "../button";
+import { CornerDownLeft, Mic, Paperclip } from "lucide-react";
+import { ChatInput } from "./chat-input";
+import { ChatMessageList } from "./chat-message-list";
+import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage } from "./chat-bubble";
 
-//  sample messages of type Message
-const sampleMessages: Message[] = [
-  {
-    id: "1",
-    role: "user",
-    content: "Hello, how has your day been? I hope you are doing well.",
-  },
-  {
-    id: "2",
-    role: "assistant",
-    content:
-      "Hi, I am doing well, thank you for asking. How can I help you today?",
-  },
-  {
-    id: "3",
-    role: "user",
-    content: "I am having some trouble with my finances.",
-  },
-  {
-    id: "4",
-    role: "assistant",
-    content: "I'm sorry to hear that. Can you tell me more about the issue?",
-  },
-  {
-    id: "5",
-    role: "user",
-    content: "I'm having trouble paying my rent.",
-  },
-  {
-    id: "6",
-    role: "assistant",
-    content: "I see. Can you provide me with your rent payment history?",
-  },
-  {
-    id: "7",
-    role: "user",
-    content: "Yes, I have a rent payment history.",
-  },
-  {
-    id: "8",
-    role: "assistant",
-    content:
-      "Thank you for providing me with your rent payment history. Can you tell me more about the payments?",
-  },
-  {
-    id: "9",
-    role: "user",
-    content: "Yes, I have a rent payment history.",
-  },
-  {
-    id: "10",
-    role: "assistant",
-    content:
-      "Thank you for providing me with your rent payment history. Can you tell me more about the payments?",
-  },
-  {
-    id: "11",
-    role: "user",
-    content: "Yes, I have a rent payment history.",
-  },
-  {
-    id: "12",
-    role: "assistant",
-    content:
-      "Thank you for providing me with your rent payment history. Can you tell me more about the payments?",
-  },
-];
-const ChatAiIcons = [
-  {
-    icon: CopyIcon,
-    label: "Copy",
-  },
-  {
-    icon: RefreshCcw,
-    label: "Refresh",
-  },
-  {
-    icon: Volume2,
-    label: "Volume",
-  },
-];
-
-export default function Chat() {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const {
-    messages,
-    setMessages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    reload,
-  } = useChat({
-    onResponse(response) {
-      if (response) {
-        console.log(response);
-        setIsGenerating(false);
-      }
-    },
-    onError(error) {
-      if (error) {
-        setIsGenerating(false);
-      }
-    },
-  });
-
-  useEffect(() => {
-    // dummy messages
-    setMessages(sampleMessages);
-  }, []);
-
+function Chat({
+  chat,
+  thread,
+}: {
+  chat: ChatInstance;
+  thread: Thread<DefaultValues>;
+}) {
   const messagesRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+
+  const [messages, setMessages] = useState<TMessage[]>(
+    thread.values?.messages?.map((message: any) => ({
+      role: message.type,
+      content:
+        typeof message.content === "object"
+          ? message.content[0].text
+          : message.content,
+    })) || []
+  );
+
+  const [lastMessage, setLastMessage] = useState("");
+
+  const [input, setInput] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     if (messagesRef.current) {
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [lastMessage, messages]);
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsGenerating(true);
-    handleSubmit(e);
-  };
+  // useEffect(() => {
+  //   const storedMessages = getLocalStorageValue(thread["thread_id"]);
+  //   console.log("STORED MESSAGES:", storedMessages);
+  //   if (storedMessages) {
+  //     setMessages(JSON.parse(storedMessages));
+  //   } else {
+  //     setMessages([]);
+  //   }
+  // }, []);
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (isGenerating || isLoading || !input) return;
+      if (isGenerating || !input) return;
       setIsGenerating(true);
-      onSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+      handleSubmit();
     }
   };
 
-  const handleActionClick = async (action: string, messageIndex: number) => {
-    console.log("Action clicked:", action, "Message index:", messageIndex);
-    if (action === "Refresh") {
-      setIsGenerating(true);
-      try {
-        await reload();
-      } catch (error) {
-        console.error("Error reloading:", error);
-      } finally {
-        setIsGenerating(false);
-      }
-    }
+  const handleSubmit = async () => {
+    const userMessage: TMessage = { role: "human", content: input };
 
-    if (action === "Copy") {
-      const message = messages[messageIndex];
-      if (message && message.role === "assistant") {
-        navigator.clipboard.writeText(message.content);
+    const messagesTillNow = [...messages, userMessage];
+
+    setMessages(messagesTillNow);
+    setInput("");
+    setIsGenerating(true);
+
+    try {
+      const streamResponse = chat.getStreamResponse(
+        userMessage,
+        thread.thread_id
+      );
+
+      let accumulatedMessage = "";
+
+      for await (const event of streamResponse) {
+        if (event.event === "messages/partial") {
+          event.data.forEach((dataItem) => {
+            if (dataItem.tool_calls.length > 0) {
+              console.log("Tool Calls:", dataItem.tool_calls);
+            } else {
+              if (dataItem.role && dataItem.role === "user") {
+                console.log(`Human: ${dataItem.content}`);
+              } else {
+                setIsGenerating(false);
+                const content = dataItem.content || "";
+                if (content) {
+                  console.log(content);
+                  accumulatedMessage = content[0]?.text || "";
+                  setLastMessage(accumulatedMessage);
+                }
+              }
+            }
+          });
+        }
       }
+      setMessages([
+        ...messagesTillNow,
+        { role: "ai", content: `${structuredClone(accumulatedMessage)}` },
+      ]);
+    } catch (error) {
+      console.error("Error streaming response:", error);
+    } finally {
+      setLastMessage("");
+      setIsGenerating(false);
     }
   };
 
   return (
     <main className="flex h-[calc(100vh-80px)] w-full flex-col items-center mx-auto">
       <ChatMessageList ref={messagesRef}>
-        {/* Messages */}
         {messages &&
           messages.map((message, index) => (
             <ChatBubble
               key={index}
-              variant={message.role == "user" ? "sent" : "received"}
-            >
+              variant={message.role == "human" ? "sent" : "received"}>
               <ChatBubbleAvatar
                 src=""
-                fallback={message.role == "user" ? "👨🏽" : "🤖"}
+                fallback={message.role == "human" ? "👨🏽" : "🤖"}
               />
-              <ChatBubbleMessage>
-                {message.content
-                  .split("```")
-                  .map((part: string, index: number) => {
-                    return (
-                      <Markdown key={index} remarkPlugins={[remarkGfm]}>
-                        {part}
-                      </Markdown>
-                    );
-                  })}
-
-                {message.role === "assistant" &&
-                  messages.length - 1 === index && (
-                    <div className="flex items-center mt-1.5 gap-1">
-                      {!isGenerating && (
-                        <>
-                          {ChatAiIcons.map((icon, iconIndex) => {
-                            const Icon = icon.icon;
-                            return (
-                              <ChatBubbleAction
-                                variant="ghost"
-                                className="size-5"
-                                key={iconIndex}
-                                icon={<Icon className="size-3" />}
-                                onClick={() =>
-                                  handleActionClick(icon.label, index)
-                                }
-                              />
-                            );
-                          })}
-                        </>
-                      )}
-                    </div>
-                  )}
-              </ChatBubbleMessage>
+              <ChatBubbleMessage>{message.content}</ChatBubbleMessage>
             </ChatBubble>
           ))}
 
-        {/* Loading */}
+        {lastMessage && (
+          <ChatBubble variant={"received"}>
+            <ChatBubbleAvatar src="" fallback={"🤖"} />
+            <ChatBubbleMessage>{lastMessage}</ChatBubbleMessage>
+          </ChatBubble>
+        )}
+
         {isGenerating && (
           <ChatBubble variant="received">
             <ChatBubbleAvatar src="" fallback="🤖" />
@@ -239,46 +136,44 @@ export default function Chat() {
           </ChatBubble>
         )}
       </ChatMessageList>
+
       <div className="w-full px-4 mt-6">
-  <form
-    ref={formRef}
-    onSubmit={onSubmit}
-    className="relative flex items-center rounded-lg bg-background p-3 space-x-2"
-  >
-    {/* Clip and Mic Buttons on the Left */}
-    <Button variant="ghost" size="icon">
-      <Paperclip className="size-4" />
-      <span className="sr-only">Attach file</span>
-    </Button>
-    <Button variant="ghost" size="icon">
-      <Mic className="size-4" />
-      <span className="sr-only">Use Microphone</span>
-    </Button>
+        <div className="relative flex items-center rounded-lg bg-background p-3 space-x-2">
+          {/* Clip and Mic Buttons on the Left */}
+          <Button variant="ghost" size="icon">
+            <Paperclip className="size-4" />
+            <span className="sr-only">Attach file</span>
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Mic className="size-4" />
+            <span className="sr-only">Use Microphone</span>
+          </Button>
 
-    {/* Chat Input */}
-    <div className="flex items-center w-full space-x-2">
-      <ChatInput
-        value={input}
-        onKeyDown={onKeyDown}
-        onChange={handleInputChange}
-        placeholder="Type your message here..."
-        className="bg-[#F6F6F6] min-h-12 resize-none rounded-lg border-0 p-3 shadow-none w-full hover:drop-shadow-lg"
-      />
+          {/* Chat Input */}
+          <div className="flex items-center w-full space-x-2">
+            <ChatInput
+              value={input}
+              onKeyDown={onKeyDown}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message here..."
+              className="bg-[#F6F6F6] min-h-12 resize-none rounded-lg border-0 p-3 shadow-none w-full hover:drop-shadow-lg"
+            />
 
-      {/* Send Button inline with ChatInput */}
-      <Button
-        disabled={!input || isLoading}
-        type="submit"
-        size="icon"
-        className="gap-1.5"
-      >
-        <CornerDownLeft className="size-3.5" />
-        <span className="sr-only">Send Message</span>
-      </Button>
-    </div>
-  </form>
-</div>
-
+            {/* Send Button inline with ChatInput */}
+            <Button
+              disabled={!input || isGenerating}
+              type="submit"
+              size="icon"
+              className="gap-1.5"
+              onClick={() => handleSubmit()}>
+              <CornerDownLeft className="size-3.5" />
+              <span className="sr-only">Send Message</span>
+            </Button>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
+
+export default Chat;

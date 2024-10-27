@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./app/login/page";
 import Layout from "./components/layout";
 import { ThemeProvider } from "./components/theme-provider";
-import HomePage from "./app/home/page";
+// import HomePage from "./app/home/page";
 import ChatPage from "./app/chat/page";
 import SettingsPage from "./app/settings/page";
 import TemplatesPage from "./app/templates/page";
@@ -15,7 +15,7 @@ const App: React.FC = () => (
       <Routes>
         <Route path="login" element={<LoginPage />} />
         <Route path="" element={<Layout />}>
-          <Route path="/" element={<HomePage />} />
+          {/* <Route path="/" element={<HomePage />} />? */}
           <Route path="chat" element={<ChatPage />} />
 
           <Route path="settings" element={<SettingsPage />} />

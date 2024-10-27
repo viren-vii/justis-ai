@@ -3,7 +3,7 @@
 import * as React from "react";
 import {
   Blocks,
-  Home,
+  //Home,
   MessageCircleQuestion,
   Search,
   Settings2,
@@ -27,11 +27,6 @@ import { LOCAL_STORAGE_ACTIVE_THREAD_IDS } from "@/lib/chat.utils";
 // This is sample data.
 const data = {
   navMain: [
-    {
-      title: "Home",
-      url: "/",
-      icon: Home,
-    },
     {
       title: "Ask AI",
       url: "/chat",

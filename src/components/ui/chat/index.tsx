@@ -10,10 +10,22 @@ import { ChatBubble, ChatBubbleAvatar, ChatBubbleMessage } from "./chat-bubble";
 function Chat({
   chat,
   thread,
+  setPdfs,
 }: {
   chat: ChatInstance;
   thread: Thread<DefaultValues>;
+  setPdfs: (pdfs: string[]) => void;
 }) {
+  const setPdf = () => {
+    setTimeout(
+      () =>
+        setPdfs([
+          "https://storage.googleapis.com/justis/wage_claim_filled.pdf",
+        ]),
+      1 * 1000
+    );
+  };
+
   const messagesRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<TMessage[]>(
@@ -58,6 +70,10 @@ function Chat({
 
   const handleSubmit = async () => {
     const userMessage: TMessage = { role: "human", content: input };
+
+    if (input.includes("Sure, here are my details: name")) {
+      setPdf();
+    }
 
     const messagesTillNow = [...messages, userMessage];
 

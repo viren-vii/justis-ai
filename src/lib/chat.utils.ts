@@ -55,7 +55,7 @@ export class ChatInstance {
 
   getStreamResponse(messages: TMessage, threadId: string) {
     return this.client.runs.stream(threadId, this.assistantId, {
-      input: { messages },
+      input: { messages, chat_control: "ai", pdf_returned: false },
       config: { configurable: { thread_id: threadId } },
       streamMode: "messages",
     });

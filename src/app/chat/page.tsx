@@ -8,6 +8,7 @@ import { ChatInstance } from "@/lib/chat.utils";
 import { useEffect, useState } from "react";
 import { DefaultValues, Thread } from "@langchain/langgraph-sdk";
 import { useLocation, useNavigate } from "react-router-dom";
+import ChatRightPanel from "@/components/ui/chat-right-panel";
 
 export default function ChatPage() {
   const chat = new ChatInstance();
@@ -25,15 +26,23 @@ export default function ChatPage() {
     });
   }, []);
 
+  const [pdfList, setPdfList] = useState<string[]>([]);
+
+  const setPdfs = (pdfs: string[]) => {
+    setPdfList(pdfs);
+  };
+
   return (
     <ResizablePanelGroup direction="horizontal" className="gap-6">
       <ResizablePanel minSize={50}>
-        {thread && <Chat chat={chat} thread={thread} />}
+        {thread && <Chat chat={chat} thread={thread} setPdfs={setPdfs} />}
       </ResizablePanel>
       <ResizableHandle withHandle />
-      {/* <ResizablePanel minSize={20}>
-        <ChatRightPanel />
-      </ResizablePanel> */}
+      {pdfList.length > 0 && (
+        <ResizablePanel minSize={20}>
+          <ChatRightPanel pdfList={pdfList} />
+        </ResizablePanel>
+      )}
     </ResizablePanelGroup>
   );
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import {
-  Blocks,
+  //Blocks,
   //Home,
   MessageCircleQuestion,
   Search,
@@ -43,11 +43,6 @@ const data = {
       title: "Settings",
       url: "settings",
       icon: Settings2,
-    },
-    {
-      title: "Templates",
-      url: "templates",
-      icon: Blocks,
     },
     {
       title: "Trash",
